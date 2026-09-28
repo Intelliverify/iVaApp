@@ -3,7 +3,31 @@ import { Alert } from "react-native";
 import { PDFDocument } from "pdf-lib";
 import { supabase } from "./supabase";
 
-export type Picked = { uri: string; name: string; mimeType: string; kind: "image" | "video" };
+export type Picked = { uri: string; name: string; mimeType: string; kind: "image" | "video"; size?: number };
+
+// Max upload size. Supabase storage rejects files above its per-file limit (50 MB on the
+// default plan), and loading anything larger into memory can crash the app — so we stop
+// early and show a message instead. Keep in sync with the Supabase bucket file-size limit.
+export const MAX_UPLOAD_BYTES = 50 * 1024 * 1024; // 50 MB
+
+const humanSize = (bytes: number) => {
+  if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(0)} MB`;
+  if (bytes >= 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${bytes} B`;
+};
+
+// Returns true if the file is within the limit; otherwise shows an alert and returns false.
+export function checkUploadSize(size?: number): boolean {
+  if (typeof size === "number" && size > MAX_UPLOAD_BYTES) {
+    Alert.alert(
+      "File too large",
+      `This file is ${humanSize(size)}. The maximum you can attach is ${humanSize(MAX_UPLOAD_BYTES)}. ` +
+        `Please choose a smaller file, or trim / compress the video before attaching.`,
+    );
+    return false;
+  }
+  return true;
+}
 
 // Capture a single photo with the camera.
 export async function takePhoto(): Promise<Picked | null> {
@@ -13,7 +37,7 @@ export async function takePhoto(): Promise<Picked | null> {
   if (r.canceled || !r.assets?.[0]) return null;
   const a: any = r.assets[0];
   const ext = (a.uri.split(".").pop() || "jpg").split("?")[0];
-  return { uri: a.uri, name: a.fileName || `photo_${Date.now()}.${ext}`, mimeType: a.mimeType || `image/${ext}`, kind: "image" };
+  return { uri: a.uri, name: a.fileName || `photo_${Date.now()}.${ext}`, mimeType: a.mimeType || `image/${ext}`, kind: "image", size: a.fileSize };
 }
 
 // Combine image URIs (in order) into a single PDF — returns the PDF bytes.
@@ -57,11 +81,13 @@ export async function pickImageOrVideo(): Promise<Picked | null> {
   const ext = (a.uri.split(".").pop() || (kind === "video" ? "mp4" : "jpg")).split("?")[0];
   const name = a.fileName || `${kind}_${Date.now()}.${ext}`;
   const mimeType = a.mimeType || (kind === "video" ? `video/${ext}` : `image/${ext}`);
-  return { uri: a.uri, name, mimeType, kind };
+  return { uri: a.uri, name, mimeType, kind, size: a.fileSize };
 }
 
 // Upload a picked file to a Supabase storage bucket; returns the public URL (or null).
 export async function uploadToBucket(bucket: string, folder: string, picked: Picked): Promise<string | null> {
+  // Stop oversized files before loading them into memory (prevents the app from crashing).
+  if (!checkUploadSize(picked.size)) return null;
   try {
     const ext = (picked.uri.split(".").pop() || "bin").split("?")[0];
     const path = `${folder}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;

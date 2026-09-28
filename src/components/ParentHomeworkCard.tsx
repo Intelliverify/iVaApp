@@ -7,6 +7,7 @@ import { supabase } from "../lib/supabase";
 import { fileKind } from "../lib/uploads";
 import AudioButton from "./AudioButton";
 import Attacher from "./Attacher";
+import LinkText from "./LinkText";
 
 const KIND_ICON: Record<string, string> = { image: "image-outline", video: "videocam-outline", pdf: "document-text-outline", file: "document-outline" };
 
@@ -67,8 +68,8 @@ export default function ParentHomeworkCard({
           <Text style={s.due}>Due {new Date(hw.due_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</Text>
         )}
       </View>
-      <Text style={s.title}>{hw.title || hw.description}</Text>
-      {hw.description && hw.title ? <Text style={s.desc}>{hw.description}</Text> : null}
+      <LinkText style={s.title}>{hw.title || hw.description}</LinkText>
+      {hw.description && hw.title ? <LinkText style={s.desc}>{hw.description}</LinkText> : null}
 
       {/* teacher attachments */}
       {teacherFiles.length > 0 && (

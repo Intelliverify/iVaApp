@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as WebBrowser from "expo-web-browser";
 import { COLORS } from "../lib/constants";
 import { supabase } from "../lib/supabase";
+import LinkText from "./LinkText";
 
 export default function TeacherHomeworkCard({
   hw, statuses, onReplied,
@@ -41,8 +42,8 @@ export default function TeacherHomeworkCard({
         <View style={s.badge}><Text style={s.badgeTxt}>{hw.subject || "General"}</Text></View>
         {hw.due_date && <Text style={s.due}>Due {new Date(hw.due_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</Text>}
       </View>
-      <Text style={s.title}>{hw.title}</Text>
-      {hw.description ? <Text style={s.desc}>{hw.description}</Text> : null}
+      <LinkText style={s.title}>{hw.title}</LinkText>
+      {hw.description ? <LinkText style={s.desc}>{hw.description}</LinkText> : null}
 
       {teacherFiles.length > 0 && (
         <View style={s.attRow}>
