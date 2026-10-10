@@ -71,8 +71,11 @@ export async function uploadBytes(bucket: string, folder: string, bytes: Uint8Ar
 // which is a native module — added in the next app build.)
 export async function pickImageOrVideo(): Promise<Picked | null> {
   // Uses the Android Photo Picker / iOS picker — no media-library permission needed.
+  // SDK 56: `mediaTypes` takes a MediaType[] (string array); the old
+  // `MediaTypeOptions.All` enum is removed and returns undefined, which made the
+  // picker silently drop videos — that was the broken video upload.
   const result = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ImagePicker.MediaTypeOptions.All, // images + videos
+    mediaTypes: ["images", "videos"], // images + videos
     quality: 0.7,
   });
   if (result.canceled || !result.assets?.[0]) return null;

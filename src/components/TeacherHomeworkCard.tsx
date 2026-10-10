@@ -4,15 +4,20 @@ import { Ionicons } from "@expo/vector-icons";
 import * as WebBrowser from "expo-web-browser";
 import { COLORS } from "../lib/constants";
 import { supabase } from "../lib/supabase";
-import LinkText from "./LinkText";
+import RichText from "./RichText";
+import { getSubjectTheme } from "../lib/subjectTheme";
 
 export default function TeacherHomeworkCard({
-  hw, statuses, onReplied,
+  hw, statuses, onReplied, onEdit,
 }: {
   hw: any;
   statuses: any[];
   onReplied: () => void;
+  onEdit?: () => void;
 }) {
+  const th = getSubjectTheme(hw.subject);
+  const isNew = hw.created_at && Date.now() - new Date(hw.created_at).getTime() < 2 * 864e5;
+  const isPast = hw.due_date ? new Date(hw.due_date) < new Date(new Date().toDateString()) : false;
   const [expanded, setExpanded] = useState(false);
   const [drafts, setDrafts]     = useState<Record<string, string>>({});
   const [busy, setBusy]         = useState(false);
@@ -37,13 +42,25 @@ export default function TeacherHomeworkCard({
   };
 
   return (
-    <View style={s.card}>
+    <View style={[s.card, { borderLeftWidth: 5, borderLeftColor: th.color }]}>
       <View style={s.top}>
-        <View style={s.badge}><Text style={s.badgeTxt}>{hw.subject || "General"}</Text></View>
-        {hw.due_date && <Text style={s.due}>Due {new Date(hw.due_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</Text>}
+        <View style={s.topLeft}>
+          <View style={[s.emoji, { backgroundColor: th.bg }]}><Text style={{ fontSize: 18 }}>{th.emoji}</Text></View>
+          <View style={[s.badge, { backgroundColor: th.bg }]}><Text style={[s.badgeTxt, { color: th.color }]}>{hw.subject || "General"}</Text></View>
+          {isNew && <View style={[s.flag, { backgroundColor: COLORS.orange }]}><Text style={s.flagTxt}>NEW</Text></View>}
+          {isPast && <View style={[s.flag, { backgroundColor: COLORS.error }]}><Text style={s.flagTxt}>PAST DUE</Text></View>}
+        </View>
+        {onEdit && (
+          <TouchableOpacity style={[s.editBtn, { backgroundColor: th.bg }]} onPress={onEdit} hitSlop={8}>
+            <Ionicons name="pencil" size={15} color={th.color} />
+          </TouchableOpacity>
+        )}
       </View>
-      <LinkText style={s.title}>{hw.title}</LinkText>
-      {hw.description ? <LinkText style={s.desc}>{hw.description}</LinkText> : null}
+      <RichText style={s.title} accent={th.color}>{hw.title}</RichText>
+      {hw.description ? <RichText style={s.desc} accent={th.color}>{hw.description}</RichText> : null}
+      <Text style={s.dueLine}>
+        {hw.due_date ? `📅 Due ${new Date(hw.due_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}` : "📌 No due date"}
+      </Text>
 
       {teacherFiles.length > 0 && (
         <View style={s.attRow}>
@@ -110,9 +127,15 @@ export default function TeacherHomeworkCard({
 const s = StyleSheet.create({
   card:   { backgroundColor: "#fff", borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: COLORS.border },
   top:    { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 },
-  badge:  { backgroundColor: "#EDE9FE", borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 },
-  badgeTxt: { fontSize: 12, fontWeight: "700", color: COLORS.primary },
+  topLeft:{ flexDirection: "row", alignItems: "center", gap: 6, flex: 1, flexWrap: "wrap" },
+  emoji:  { width: 32, height: 32, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+  badge:  { borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 },
+  badgeTxt: { fontSize: 12, fontWeight: "800", color: COLORS.primary, textTransform: "uppercase" },
+  flag:   { borderRadius: 20, paddingHorizontal: 7, paddingVertical: 3 },
+  flagTxt:{ fontSize: 9, fontWeight: "800", color: "#fff" },
+  editBtn:{ width: 32, height: 32, borderRadius: 10, alignItems: "center", justifyContent: "center" },
   due:    { fontSize: 12, color: COLORS.orange, fontWeight: "600" },
+  dueLine:{ fontSize: 12, color: COLORS.mid, fontWeight: "700", marginTop: 7 },
   title:  { fontSize: 15, fontWeight: "700", color: COLORS.dark, lineHeight: 22 },
   desc:   { fontSize: 13, color: COLORS.mid, marginTop: 4, lineHeight: 19 },
   attRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 10 },

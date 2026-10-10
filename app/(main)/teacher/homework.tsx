@@ -29,6 +29,8 @@ export default function TeacherHomework() {
   const [statusByHw, setStatusByHw]   = useState<Record<string, any[]>>({});
   const [submitting, setSubmitting] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [editId, setEditId]     = useState<string | null>(null);        // homework being edited (null = create)
+  const [descSel, setDescSel]   = useState({ start: 0, end: 0 });        // for the rich-text toolbar
 
   const load = async (isRefresh = false) => {
     if (isRefresh) setRefresh(true); else setLoading(true);
@@ -57,29 +59,60 @@ export default function TeacherHomework() {
   useRealtime("homework", () => load());
   useRealtime("homework_status", () => load());
 
+  const resetForm = () => {
+    setTitle(""); setDesc(""); setDueDate(""); setKeywords(""); setAttachments([]); setEditId(null);
+  };
+
+  // Open the form pre-filled to edit an existing homework.
+  const startEdit = (hw: any) => {
+    setEditId(hw.id);
+    setSubject(hw.subject || SUBJECTS[0]);
+    setTitle(hw.title || "");
+    setDesc(hw.description || "");
+    setDueDate((hw.due_date || "").slice(0, 10));
+    setKeywords(hw.audio_keywords || "");
+    setAttachments(Array.isArray(hw.attachments) ? hw.attachments : []);
+    setShowForm(true);
+  };
+
+  // Rich-text toolbar: wrap the current description selection with markers.
+  const wrapDesc = (marker: string) => {
+    const { start, end } = descSel;
+    const sel = desc.slice(start, end) || "text";
+    setDesc(desc.slice(0, start) + marker + sel + marker + desc.slice(end));
+  };
+
   const handleSubmit = async () => {
     if (!title.trim()) { Alert.alert("Enter a title"); return; }
     setSubmitting(true);
     try {
       const base: any = {
-        section_id:  session?.sectionId,
         subject,
         title:       title.trim(),
         description: desc.trim() || null,
         due_date:    dueDate || null,
-        assigned_by: session?.name || null,
         attachments,
       };
-      // Try with the keep-in-English keywords; if the column isn't added yet,
-      // fall back to inserting without it so homework still saves.
-      let { error } = await supabase.from("homework").insert({ ...base, audio_keywords: keywords.trim() || null });
-      if (error && /audio_keywords/i.test(error.message)) {
-        ({ error } = await supabase.from("homework").insert(base));
+      let error;
+      if (editId) {
+        // UPDATE existing homework
+        ({ error } = await supabase.from("homework").update({ ...base, audio_keywords: keywords.trim() || null }).eq("id", editId));
+        if (error && /audio_keywords/i.test(error.message)) {
+          ({ error } = await supabase.from("homework").update(base).eq("id", editId));
+        }
+      } else {
+        // INSERT new homework
+        const ins = { ...base, section_id: session?.sectionId, assigned_by: session?.name || null };
+        ({ error } = await supabase.from("homework").insert({ ...ins, audio_keywords: keywords.trim() || null }));
+        if (error && /audio_keywords/i.test(error.message)) {
+          ({ error } = await supabase.from("homework").insert(ins));
+        }
       }
       if (error) { Alert.alert("Error", error.message); return; }
-      setTitle(""); setDesc(""); setDueDate(""); setKeywords(""); setAttachments([]); setShowForm(false);
-      load();
-      Alert.alert("Done", "Homework assigned!");
+      const wasEdit = !!editId;
+      resetForm(); setShowForm(false);
+      load(true); // refresh in place (no full-screen spinner)
+      Alert.alert("Done", wasEdit ? "Homework updated!" : "Homework assigned!");
     } catch (e: any) {
       Alert.alert("Error", e?.message || "Could not save. Check connection.");
     } finally {
@@ -101,7 +134,7 @@ export default function TeacherHomework() {
       >
         <View style={s.pageHeader}>
           <Text style={s.pageTitle}>Homework</Text>
-          <TouchableOpacity style={s.addBtn} onPress={() => setShowForm((v) => !v)}>
+          <TouchableOpacity style={s.addBtn} onPress={() => { if (showForm) { setShowForm(false); resetForm(); } else { resetForm(); setShowForm(true); } }}>
             <Ionicons name={showForm ? "close" : "add"} size={20} color="#fff" />
             <Text style={s.addBtnTxt}>{showForm ? "Cancel" : "Assign"}</Text>
           </TouchableOpacity>
@@ -110,7 +143,7 @@ export default function TeacherHomework() {
         {/* Assign form */}
         {showForm && (
           <View style={s.formCard}>
-            <Text style={s.formTitle}>New Assignment</Text>
+            <Text style={s.formTitle}>{editId ? "✏️ Edit Assignment" : "New Assignment"}</Text>
 
             {/* Subject picker */}
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 14 }}>
@@ -134,12 +167,18 @@ export default function TeacherHomework() {
               value={title}
               onChangeText={setTitle}
             />
+            <View style={s.rtBar}>
+              <TouchableOpacity style={s.rtBtn} onPress={() => wrapDesc("**")}><Text style={[s.rtBtnTxt, { fontWeight: "900" }]}>B</Text></TouchableOpacity>
+              <TouchableOpacity style={s.rtBtn} onPress={() => wrapDesc("*")}><Text style={[s.rtBtnTxt, { fontStyle: "italic" }]}>i</Text></TouchableOpacity>
+              <TouchableOpacity style={[s.rtBtn, { backgroundColor: "#FEF9C3" }]} onPress={() => wrapDesc("==")}><Text style={s.rtBtnTxt}>Highlight</Text></TouchableOpacity>
+            </View>
             <TextInput
               style={[s.formInput, s.formTextarea]}
-              placeholder="Description (optional)"
+              placeholder={"Description (optional)\nSelect text then tap B / i / Highlight. New lines are kept."}
               placeholderTextColor={COLORS.mid}
               value={desc}
               onChangeText={setDesc}
+              onSelectionChange={(e) => setDescSel(e.nativeEvent.selection)}
               multiline
               numberOfLines={3}
             />
@@ -176,7 +215,7 @@ export default function TeacherHomework() {
               onPress={handleSubmit}
               disabled={submitting}
             >
-              {submitting ? <ActivityIndicator color="#fff" /> : <Text style={s.submitBtnTxt}>Assign Homework →</Text>}
+              {submitting ? <ActivityIndicator color="#fff" /> : <Text style={s.submitBtnTxt}>{editId ? "Save Changes →" : "Assign Homework →"}</Text>}
             </TouchableOpacity>
           </View>
         )}
@@ -195,6 +234,7 @@ export default function TeacherHomework() {
               hw={hw}
               statuses={statusByHw[hw.id] || []}
               onReplied={() => load(true)}
+              onEdit={() => startEdit(hw)}
             />
           ))
         )}
@@ -220,6 +260,9 @@ const s = StyleSheet.create({
   subjectTxtActive:  { color: "#fff" },
   formInput:         { backgroundColor: COLORS.bg, borderRadius: 12, padding: 14, fontSize: 14, color: COLORS.dark, borderWidth: 1, borderColor: COLORS.border, marginBottom: 12 },
   formTextarea:      { height: 80, textAlignVertical: "top" },
+  rtBar:             { flexDirection: "row", gap: 8, marginBottom: 8 },
+  rtBtn:             { minWidth: 34, height: 30, borderRadius: 8, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.bg, alignItems: "center", justifyContent: "center", paddingHorizontal: 10 },
+  rtBtnTxt:          { fontSize: 13, color: COLORS.dark, fontWeight: "700" },
   formHint:          { fontSize: 11, color: COLORS.mid, marginTop: -6, marginBottom: 12, lineHeight: 16 },
   attachRow:         { flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 10, marginBottom: 4 },
   attachRowTxt:      { fontSize: 13, fontWeight: "600", color: COLORS.primary },

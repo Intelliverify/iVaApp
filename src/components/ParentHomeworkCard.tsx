@@ -7,7 +7,8 @@ import { supabase } from "../lib/supabase";
 import { fileKind } from "../lib/uploads";
 import AudioButton from "./AudioButton";
 import Attacher from "./Attacher";
-import LinkText from "./LinkText";
+import RichText from "./RichText";
+import { getSubjectTheme } from "../lib/subjectTheme";
 
 const KIND_ICON: Record<string, string> = { image: "image-outline", video: "videocam-outline", pdf: "document-text-outline", file: "document-outline" };
 
@@ -35,6 +36,9 @@ export default function ParentHomeworkCard({
   const [doubtFile, setDoubtFile] = useState<string | null>(statusRow?.doubt_file_url || null);
 
   const done = statusRow?.status === "done";
+  const th = getSubjectTheme(hw.subject);
+  const isNew = hw.created_at && Date.now() - new Date(hw.created_at).getTime() < 2 * 864e5;
+  const isPast = !done && hw.due_date && new Date(hw.due_date) < new Date(new Date().toDateString());
 
   // teacher attachments: new jsonb array + legacy single file_url
   const teacherFiles: string[] = [
@@ -60,16 +64,21 @@ export default function ParentHomeworkCard({
   };
 
   return (
-    <View style={[s.card, done && s.cardDone]}>
+    <View style={[s.card, { borderLeftWidth: 5, borderLeftColor: th.color }, done && s.cardDone]}>
       {/* top row */}
       <View style={s.top}>
-        <View style={s.subjectPill}><Text style={s.subjectTxt}>{hw.subject || "General"}</Text></View>
-        {(hw.due_date) && (
-          <Text style={s.due}>Due {new Date(hw.due_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</Text>
-        )}
+        <View style={s.topLeft}>
+          <View style={[s.emoji, { backgroundColor: th.bg }]}><Text style={{ fontSize: 18 }}>{th.emoji}</Text></View>
+          <View style={[s.subjectPill, { backgroundColor: th.bg }]}><Text style={[s.subjectTxt, { color: th.color }]}>{hw.subject || "General"}</Text></View>
+          {isNew && <View style={[s.flag, { backgroundColor: COLORS.orange }]}><Text style={s.flagTxt}>NEW</Text></View>}
+          {isPast && <View style={[s.flag, { backgroundColor: COLORS.error }]}><Text style={s.flagTxt}>PAST DUE</Text></View>}
+        </View>
       </View>
-      <LinkText style={s.title}>{hw.title || hw.description}</LinkText>
-      {hw.description && hw.title ? <LinkText style={s.desc}>{hw.description}</LinkText> : null}
+      <RichText style={s.title} accent={th.color}>{hw.title || hw.description}</RichText>
+      {hw.description && hw.title ? <RichText style={s.desc} accent={th.color}>{hw.description}</RichText> : null}
+      <Text style={s.dueLine}>
+        {done ? "✅ Completed" : (hw.due_date ? `📅 Due ${new Date(hw.due_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}` : "📌 No due date")}
+      </Text>
 
       {/* teacher attachments */}
       {teacherFiles.length > 0 && (
@@ -144,9 +153,14 @@ const s = StyleSheet.create({
   card:      { backgroundColor: "#fff", borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: COLORS.border },
   cardDone:  { borderColor: COLORS.success + "55", backgroundColor: "#F6FBF7" },
   top:       { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 10 },
+  topLeft:   { flexDirection: "row", alignItems: "center", gap: 6, flex: 1, flexWrap: "wrap" },
+  emoji:     { width: 32, height: 32, borderRadius: 10, alignItems: "center", justifyContent: "center" },
   subjectPill: { backgroundColor: COLORS.eduLight, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 },
-  subjectTxt:  { fontSize: 12, fontWeight: "700", color: COLORS.edu },
+  subjectTxt:  { fontSize: 12, fontWeight: "800", color: COLORS.edu, textTransform: "uppercase" },
+  flag:      { borderRadius: 20, paddingHorizontal: 7, paddingVertical: 3 },
+  flagTxt:   { fontSize: 9, fontWeight: "800", color: "#fff" },
   due:       { fontSize: 12, color: COLORS.orange, fontWeight: "600" },
+  dueLine:   { fontSize: 12, color: COLORS.mid, fontWeight: "700", marginTop: 7 },
   title:     { fontSize: 15, fontWeight: "700", color: COLORS.dark, lineHeight: 22 },
   desc:      { fontSize: 13, color: COLORS.mid, marginTop: 6, lineHeight: 19 },
 
