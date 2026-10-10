@@ -210,6 +210,19 @@ export default function TeacherHomework() {
               />
             </View>
 
+            {attachments.length > 0 && (
+              <View style={s.attChips}>
+                {attachments.map((f, i) => (
+                  <View key={i} style={s.attChip}>
+                    <Text style={s.attChipTxt} numberOfLines={1}>📎 {f?.name || `file ${i + 1}`}</Text>
+                    <TouchableOpacity onPress={() => setAttachments((arr) => arr.filter((_, j) => j !== i))} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                      <Text style={s.attChipX}>✕</Text>
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            )}
+
             <TouchableOpacity
               style={[s.submitBtn, submitting && { opacity: 0.6 }]}
               onPress={handleSubmit}
@@ -266,6 +279,10 @@ const s = StyleSheet.create({
   formHint:          { fontSize: 11, color: COLORS.mid, marginTop: -6, marginBottom: 12, lineHeight: 16 },
   attachRow:         { flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 10, marginBottom: 4 },
   attachRowTxt:      { fontSize: 13, fontWeight: "600", color: COLORS.primary },
+  attChips:          { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 12 },
+  attChip:           { flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: COLORS.eduLight, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, maxWidth: "100%" },
+  attChipTxt:        { fontSize: 12, fontWeight: "600", color: COLORS.edu, flexShrink: 1 },
+  attChipX:          { fontSize: 13, fontWeight: "800", color: COLORS.error },
   submitBtn:         { backgroundColor: COLORS.primary, borderRadius: 12, padding: 14, alignItems: "center" },
   submitBtnTxt:      { color: "#fff", fontSize: 15, fontWeight: "700" },
   sectionTitle:      { fontSize: 13, fontWeight: "700", color: COLORS.mid, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 12 },

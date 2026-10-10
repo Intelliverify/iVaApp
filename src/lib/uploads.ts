@@ -1,7 +1,9 @@
 import * as ImagePicker from "expo-image-picker";
+import * as FileSystem from "expo-file-system/legacy";
 import { Alert } from "react-native";
 import { PDFDocument } from "pdf-lib";
 import { supabase } from "./supabase";
+import { SUPABASE_URL, SUPABASE_ANON } from "./constants";
 
 export type Picked = { uri: string; name: string; mimeType: string; kind: "image" | "video"; size?: number };
 
@@ -88,16 +90,41 @@ export async function pickImageOrVideo(): Promise<Picked | null> {
 }
 
 // Upload a picked file to a Supabase storage bucket; returns the public URL (or null).
+// Streams the file from disk straight to Supabase Storage via expo-file-system —
+// the bytes never pass through JS memory, so large videos no longer crash the app
+// (the old fetch().arrayBuffer() path OOM-ed, and a Blob body isn't supported in RN).
+// Size is read with getInfoAsync (the image picker often omits a video's size).
 export async function uploadToBucket(bucket: string, folder: string, picked: Picked): Promise<string | null> {
-  // Stop oversized files before loading them into memory (prevents the app from crashing).
-  if (!checkUploadSize(picked.size)) return null;
   try {
+    let size = picked.size;
+    if (typeof size !== "number") {
+      const info = await FileSystem.getInfoAsync(picked.uri);
+      size = info.exists && typeof info.size === "number" ? info.size : 0;
+    }
+    if (!checkUploadSize(size)) return null;
+
     const ext = (picked.uri.split(".").pop() || "bin").split("?")[0];
     const path = `${folder}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
-    const res = await fetch(picked.uri);
-    const arrayBuffer = await res.arrayBuffer();
-    const { error } = await supabase.storage.from(bucket).upload(path, arrayBuffer, { contentType: picked.mimeType, upsert: false });
-    if (error) { Alert.alert("Upload failed", error.message); return null; }
+    const res = await FileSystem.uploadAsync(
+      `${SUPABASE_URL}/storage/v1/object/${bucket}/${path}`,
+      picked.uri,
+      {
+        httpMethod: "POST",
+        uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
+        headers: {
+          apikey: SUPABASE_ANON,
+          Authorization: `Bearer ${SUPABASE_ANON}`,
+          "Content-Type": picked.mimeType || "application/octet-stream",
+          "x-upsert": "false",
+        },
+      },
+    );
+    if (res.status < 200 || res.status >= 300) {
+      let msg = `Upload failed (${res.status})`;
+      try { const j = JSON.parse(res.body); msg = j.message || j.error || msg; } catch {}
+      Alert.alert("Upload failed", msg);
+      return null;
+    }
     const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(path);
     return publicUrl;
   } catch (e: any) {
