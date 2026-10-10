@@ -40,6 +40,7 @@
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
+    "patch-package": "^8.0.0",
     "typescript": "~6.0.3"
   },
   "scripts": {
@@ -47,7 +48,8 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "eas-build-on-success": "node scripts/eas-log-build-event.js"
+    "eas-build-on-success": "node scripts/eas-log-build-event.js",
+    "postinstall": "patch-package"
   },
   "private": true
 }
