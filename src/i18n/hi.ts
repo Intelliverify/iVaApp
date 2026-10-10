@@ -1,4 +1,23 @@
 export default {
+  // Password management (change / reset / reminder)
+  changePassword:          "पासवर्ड बदलें",
+  currentPassword:         "वर्तमान पासवर्ड",
+  newPasswordLabel:        "नया पासवर्ड",
+  confirmPassword:         "नया पासवर्ड दोबारा लिखें",
+  passwordMin8:            "कम से कम 8 अक्षर",
+  passwordsNoMatch:        "नया पासवर्ड और पुष्टि मेल नहीं खाते",
+  passwordSameAsCurrent:   "नया पासवर्ड वर्तमान पासवर्ड से अलग होना चाहिए",
+  passwordChanged:         "आपका पासवर्ड सफलतापूर्वक बदल दिया गया है।",
+  passwordNotDefaultHint:  "आपका नया पासवर्ड डिफ़ॉल्ट पासवर्ड से अलग और कम से कम 8 अक्षरों का होना चाहिए।",
+  updatePassword:          "पासवर्ड अपडेट करें",
+  resetToDefaultMsg:       "आपका पासवर्ड डिफ़ॉल्ट पासवर्ड पर रीसेट कर दिया गया है (बच्चे के नाम का पहला अक्षर + जन्म वर्ष + फ़ोन के अंतिम 4 अंक)। कृपया लॉग इन करें और अपना पासवर्ड बदलें।",
+  resetToDefaultHint:      "आपका पासवर्ड डिफ़ॉल्ट पासवर्ड पर रीसेट होगा (बच्चे के नाम का पहला अक्षर + जन्म वर्ष + फ़ोन के अंतिम 4 अंक)।",
+  resetToDefaultBtn:       "डिफ़ॉल्ट पर रीसेट करें →",
+  defaultPwReminderTitle:  "अपना खाता सुरक्षित करें",
+  defaultPwReminderBody:   "आप अभी भी डिफ़ॉल्ट पासवर्ड का उपयोग कर रहे हैं। अपने खाते को सुरक्षित रखने के लिए अपना पासवर्ड सेट करें।",
+  setYourPassword:         "मेरा पासवर्ड सेट करें",
+  remindMeLater:           "बाद में याद दिलाएं",
+
   // Login
   whoAreYou:          "आप कौन हैं?",
   selectRole:         "जारी रखने के लिए अपनी भूमिका चुनें",

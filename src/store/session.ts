@@ -14,6 +14,7 @@ export interface Session {
   sectionName?: string;    // teacher's currently-selected section name
   staffRole?: string;      // real HR role from teacher_accounts (Teacher / Driver / Helper / Coordinator)
   children?: any[];        // parent's children list
+  isDefaultPassword?: boolean; // parent still on the auto-generated default password
   loginTime: number;
 }
 

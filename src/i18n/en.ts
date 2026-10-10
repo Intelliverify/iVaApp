@@ -1,4 +1,23 @@
 export default {
+  // Password management (change / reset / reminder)
+  changePassword:          "Change Password",
+  currentPassword:         "Current Password",
+  newPasswordLabel:        "New Password",
+  confirmPassword:         "Confirm New Password",
+  passwordMin8:            "At least 8 characters",
+  passwordsNoMatch:        "New password and confirmation do not match",
+  passwordSameAsCurrent:   "New password must be different from your current password",
+  passwordChanged:         "Your password has been changed successfully.",
+  passwordNotDefaultHint:  "Your new password must be different from your default password and at least 8 characters.",
+  updatePassword:          "Update Password",
+  resetToDefaultMsg:       "Your password has been reset to the default password (first letter of your child's name + year of birth + last 4 digits of your phone). Please log in and change your password.",
+  resetToDefaultHint:      "Your password will be reset to the default password (first letter of child's name + year of birth + last 4 digits of phone).",
+  resetToDefaultBtn:       "Reset to Default →",
+  defaultPwReminderTitle:  "Secure your account",
+  defaultPwReminderBody:   "You're still using your default password. Set your own password to keep your account safe.",
+  setYourPassword:         "Set my password",
+  remindMeLater:           "Remind me later",
+
   // Login
   whoAreYou:          "Who are you?",
   selectRole:         "Select your role to continue",

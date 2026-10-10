@@ -6,7 +6,7 @@ import {
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { COLORS } from "../../src/lib/constants";
-import { parentLogin, parentFirstLogin, sendResetOTP, resetPassword, teacherLogin, adminLogin, ownerLogin } from "../../src/lib/api";
+import { parentLogin, parentFirstLogin, sendResetOTP, resetToDefaultWithOTP, teacherLogin, adminLogin, ownerLogin } from "../../src/lib/api";
 import { useSession } from "../../src/store/session";
 import LanguageSwitcher from "../../src/components/LanguageSwitcher";
 
@@ -32,7 +32,6 @@ export default function LoginScreen() {
   const [dob, setDob]       = useState("");
   const [last4, setLast4]   = useState("");
   const [otp, setOtp]       = useState("");
-  const [newPass, setNewPass] = useState("");
   const [user, setUser]     = useState("");
   const [pass, setPass]     = useState("");
   const [busy, setBusy]     = useState(false);
@@ -61,6 +60,7 @@ export default function LoginScreen() {
     await setSession({
       role: "parent", phone: cleanPhone(),
       name: data.childName || "", children: [],
+      isDefaultPassword: data.isDefaultPassword === true,
       loginTime: Date.now(),
     });
     router.replace("/(main)/parent/home");
@@ -83,6 +83,7 @@ export default function LoginScreen() {
           await setSession({
             role: "parent", phone: cleanPhone(),
             name: data.childName || "", children: [],
+            isDefaultPassword: true, // just set up with the default password
             loginTime: Date.now(),
           });
           router.replace("/(main)/parent/home");
@@ -98,27 +99,22 @@ export default function LoginScreen() {
     const data = await sendResetOTP(cleanPhone());
     setBusy(false);
     if (data.error) { Alert.alert("Error", data.error); return; }
-    setOtp(""); setNewPass("");
+    setOtp("");
     setMode("parent_otp");
   };
 
-  // ── Parent: reset password + auto-login ────────────────────────────────
-  const handleResetPassword = async () => {
-    if (otp.length < 6 || newPass.length < 8) { Alert.alert(t("fillAllFields")); return; }
+  // ── Parent: verify OTP → reset to DEFAULT password ─────────────────────
+  // We never show the actual password — only the format. The parent then logs
+  // in with their default password (also delivered via WhatsApp).
+  const handleResetToDefault = async () => {
+    if (otp.length < 6) { Alert.alert(t("fillAllFields")); return; }
     setBusy(true);
-    const data = await resetPassword(cleanPhone(), otp, newPass);
-    if (data.error) { setBusy(false); Alert.alert("Error", data.error); return; }
-    const login = await parentLogin(cleanPhone(), newPass);
+    const data = await resetToDefaultWithOTP(cleanPhone(), otp);
     setBusy(false);
-    if (login.error) {
-      setPassword(""); setMode("parent_password"); return;
-    }
-    await setSession({
-      role: "parent", phone: cleanPhone(),
-      name: login.childName || "", children: [],
-      loginTime: Date.now(),
-    });
-    router.replace("/(main)/parent/home");
+    if (data.error) { Alert.alert("Error", data.error); return; }
+    Alert.alert(t("resetPassword"), data.message || t("resetToDefaultMsg"), [
+      { text: t("loginBtn"), onPress: () => { setPassword(""); setOtp(""); setMode("parent_password"); } },
+    ]);
   };
 
   // ── Teacher login ───────────────────────────────────────────────────────
@@ -357,16 +353,11 @@ export default function LoginScreen() {
               value={otp}
               onChangeText={setOtp}
             />
-            <TextInput
-              style={s.input}
-              placeholder={t("newPassPlaceholder")}
-              placeholderTextColor={COLORS.mid}
-              secureTextEntry
-              value={newPass}
-              onChangeText={setNewPass}
-            />
-            <TouchableOpacity style={[s.btn, busy && s.btnDisabled]} onPress={handleResetPassword} disabled={busy}>
-              {busy ? <ActivityIndicator color="#fff" /> : <Text style={s.btnTxt}>{t("resetLogin")}</Text>}
+            <View style={s.hintBox}>
+              <Text style={s.hintText}>{t("resetToDefaultHint")}</Text>
+            </View>
+            <TouchableOpacity style={[s.btn, busy && s.btnDisabled]} onPress={handleResetToDefault} disabled={busy}>
+              {busy ? <ActivityIndicator color="#fff" /> : <Text style={s.btnTxt}>{t("resetToDefaultBtn")}</Text>}
             </TouchableOpacity>
           </View>
         )}

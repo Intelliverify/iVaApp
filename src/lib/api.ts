@@ -109,13 +109,33 @@ export async function sendResetOTP(phone: string) {
   return res.json();
 }
 
-export async function resetPassword(phone: string, otp: string, newPassword: string) {
-  const res = await fetch(`${EDU_API}/api/auth/verify-otp`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ phone, otp, newPassword, role: "parent" }),
-  });
-  return res.json();
+// Forgot password → verify OTP and reset to the DEFAULT password.
+// The server returns a FORMAT message (never the actual password).
+export async function resetToDefaultWithOTP(phone: string, otp: string) {
+  try {
+    const res = await fetch(`${EDU_API}/api/auth/verify-otp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone: phone10(phone), otp, role: "parent", resetToDefault: true }),
+    });
+    return res.json();
+  } catch {
+    return { error: "Unable to connect to the school server. Please check your internet connection." };
+  }
+}
+
+// Authenticated change password for a logged-in parent.
+export async function changePassword(phone: string, currentPassword: string, newPassword: string) {
+  try {
+    const res = await fetch(`${EDU_API}/api/auth/change-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone: phone10(phone), currentPassword, newPassword }),
+    });
+    return res.json();
+  } catch {
+    return { error: "Unable to connect to the school server. Please check your internet connection." };
+  }
 }
 
 export async function teacherLogin(username: string, password: string) {

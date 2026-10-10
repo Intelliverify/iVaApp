@@ -143,6 +143,12 @@ export default function ParentProfile() {
           <Text style={s.rowValue}>{currentLang.native}</Text>
           <Ionicons name="chevron-forward" size={16} color={COLORS.mid} />
         </TouchableOpacity>
+        <View style={s.rowDivider} />
+        <TouchableOpacity style={s.row} onPress={() => router.push("/(main)/parent/change-password" as any)} activeOpacity={0.7}>
+          <Ionicons name="lock-closed-outline" size={20} color={COLORS.edu} />
+          <Text style={s.rowLabel}>{t("changePassword")}</Text>
+          <Ionicons name="chevron-forward" size={16} color={COLORS.mid} />
+        </TouchableOpacity>
       </View>
 
       {/* Features grid */}
@@ -221,6 +227,7 @@ const s = StyleSheet.create({
   sectionLabel:     { fontSize: 11, fontWeight: "700", color: COLORS.mid, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 },
   card:             { backgroundColor: "#fff", borderRadius: 16, borderWidth: 1, borderColor: COLORS.border, overflow: "hidden" },
   row:              { flexDirection: "row", alignItems: "center", padding: 16, gap: 12 },
+  rowDivider:       { height: 1, backgroundColor: COLORS.border, marginLeft: 16 },
   rowLabel:         { flex: 1, fontSize: 14, fontWeight: "600", color: COLORS.dark },
   rowValue:         { fontSize: 13, color: COLORS.mid, marginRight: 4 },
   grid:             { flexDirection: "row", flexWrap: "wrap", gap: 12, marginBottom: 28 },

@@ -14,6 +14,7 @@ import { registerPushToken } from "../../../src/lib/notifications";
 import { useSession } from "../../../src/store/session";
 import { useRealtime } from "../../../src/lib/realtime";
 import AudioButton from "../../../src/components/AudioButton";
+import DefaultPasswordReminder from "../../../src/components/DefaultPasswordReminder";
 import { useSeen } from "../../../src/store/seen";
 
 const ALL_ACTIVITIES = [
@@ -274,6 +275,7 @@ export default function ParentHome() {
 
   return (
     <View style={{ flex: 1 }}>
+    <DefaultPasswordReminder />
     <ScrollView style={s.root} contentContainerStyle={s.content}
       refreshControl={<RefreshControl refreshing={refresh} onRefresh={() => load(true)} tintColor={COLORS.edu} />}>
 

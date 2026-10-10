@@ -50,6 +50,7 @@ export default function ParentLayout() {
       <Tabs.Screen name="transport"  options={{ href: null }} />
       <Tabs.Screen name="kit"        options={{ href: null }} />
       <Tabs.Screen name="reels"      options={{ href: null }} />
+      <Tabs.Screen name="change-password" options={{ href: null }} />
     </Tabs>
   );
 }
