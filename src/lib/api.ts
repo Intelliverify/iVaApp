@@ -418,7 +418,7 @@ export async function getAudioOverviews(_token?: string, lang?: string) {
 // generated the first time some parent requests it, then reused for everyone.
 export async function getItemAudio(payload: {
   sourceType: string; sourceId: string; title: string; content: string; language: string;
-  keepEnglish?: string;
+  keepEnglish?: string; postedDate?: string; dueDate?: string;
 }) {
   const res = await fetch(`${EDU_API}/api/audio/for`, {
     method: "POST",

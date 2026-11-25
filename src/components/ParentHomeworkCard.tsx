@@ -77,6 +77,7 @@ export default function ParentHomeworkCard({
       <RichText style={s.title} accent={th.color}>{hw.title || hw.description}</RichText>
       {hw.description && hw.title ? <RichText style={s.desc} accent={th.color}>{hw.description}</RichText> : null}
       <Text style={s.dueLine}>
+        {hw.created_at ? `🗓 Posted ${new Date(hw.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short" })} · ` : ""}
         {done ? "✅ Completed" : (hw.due_date ? `📅 Due ${new Date(hw.due_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}` : "📌 No due date")}
       </Text>
 
@@ -95,6 +96,8 @@ export default function ParentHomeworkCard({
             title={hw.subject || hw.title || "Homework"}
             content={`${hw.title || hw.subject || ""}. ${hw.description || ""}`.trim()}
             keepEnglish={hw.audio_keywords || hw.keywords}
+            postedDate={hw.created_at ? new Date(hw.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }) : undefined}
+            dueDate={hw.due_date ? new Date(hw.due_date).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }) : undefined}
           />
         </View>
       )}

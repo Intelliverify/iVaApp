@@ -21,7 +21,7 @@ const fmt = (sec: number) => {
  * Uses expo-audio (expo-av was removed in SDK 56).
  */
 export default function AudioButton({
-  sourceType = "custom", sourceId = "", title, content = "", keepEnglish, directUrl, onStart,
+  sourceType = "custom", sourceId = "", title, content = "", keepEnglish, directUrl, onStart, postedDate, dueDate,
 }: {
   sourceType?: string;
   sourceId?: string;
@@ -30,6 +30,8 @@ export default function AudioButton({
   keepEnglish?: string | null;
   directUrl?: string | null;   // play this URL directly (already-generated audio) — skip generation
   onStart?: () => void;        // fired when playback begins (e.g. to mark "seen")
+  postedDate?: string | null;  // spoken in the audio (e.g. "25 November 2026")
+  dueDate?: string | null;     // spoken in the audio if present
 }) {
   const { i18n } = useTranslation();
   const player = useAudioPlayer(undefined, { updateInterval: 250 });
@@ -79,11 +81,11 @@ export default function AudioButton({
       if (!url) {
         // on-demand: generate (or fetch cached) in the parent's language
         const lang = (i18n.language || "en").split(/[-_]/)[0];
-        let res = await getItemAudio({ sourceType, sourceId, title, content, language: lang, keepEnglish: keepEnglish || undefined });
+        let res = await getItemAudio({ sourceType, sourceId, title, content, language: lang, keepEnglish: keepEnglish || undefined, postedDate: postedDate || undefined, dueDate: dueDate || undefined });
         let tries = 0;
         while (res?.status === "generating" && tries < 20 && mountedRef.current) {
           await new Promise((r) => setTimeout(r, 3000));
-          res = await getItemAudio({ sourceType, sourceId, title, content, language: lang, keepEnglish: keepEnglish || undefined });
+          res = await getItemAudio({ sourceType, sourceId, title, content, language: lang, keepEnglish: keepEnglish || undefined, postedDate: postedDate || undefined, dueDate: dueDate || undefined });
           tries++;
         }
         if (res?.status === "ready" && res.audio_url) url = res.audio_url;
